@@ -1,0 +1,44 @@
+import numpy as np
+
+# -- 1) Baixar a base
+!wget -q "https://raw.githubusercontent.com/andre-marcos-perez/ebac-course-utils/develop/dataset/traffic.csv" -O traffic.csv
+
+# -- 2) Ler e preparar os dados
+data = np.genfromtxt("traffic.csv", delimiter=";", skip_header=1, dtype=int)
+
+# Remover a primeira coluna (meia hora) e a última (vazia)
+data = data[:, 1:-1]
+
+# -- 3) Separar os dados por dia
+# São 27 meias-horas por dia
+days = {}
+start = 0
+for d in range(14, 19):  # de 14/12 até 18/12
+    end = start + 27
+    day_data = data[start:end]
+    # soma dos incidentes em cada meia hora
+    day_array = day_data.sum(axis=1)
+    days[d] = day_array
+    start = end
+
+# -- 4) Calcular média e desvio padrão por dia
+stats = {}
+for d, arr in days.items():
+    stats[d] = {
+        "media": np.mean(arr),
+        "desvio": np.std(arr)
+    }
+
+# -- 5) Resultados
+print("Médias e desvios por dia:\n")
+for d, vals in stats.items():
+    print(f"Dia {d}: média = {vals['media']:.2f}, desvio = {vals['desvio']:.2f}")
+
+# Dia com maior média
+dia_maior_media = max(stats, key=lambda x: stats[x]["media"])
+# Dia com menor desvio padrão
+dia_menor_variacao = min(stats, key=lambda x: stats[x]["desvio"])
+
+print("\nConclusões:")
+print(f"→ O dia com maior média de incidentes por meia hora foi {dia_maior_media}.")
+print(f"→ O dia com menor variação (desvio padrão) foi {dia_menor_variacao}.")
