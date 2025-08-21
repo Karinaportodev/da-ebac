@@ -1,0 +1,40 @@
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+# 1) Carregar a base
+data = sns.load_dataset("penguins")
+
+# 1. Tratar valores faltantes (remover linhas com NaN nas preditoras, manter 'species')
+data_clean = data.dropna(subset=[col for col in data.columns if col != "species"]).copy()
+
+# 2. Identificar variáveis numéricas (exceto resposta)
+num_cols = data_clean.select_dtypes(include=["float64", "int64"]).columns.tolist()
+
+# 3. Padronizar variáveis numéricas
+for col in num_cols:
+    col_std = col + "_std"
+    data_clean[col_std] = (data_clean[col] - data_clean[col].mean()) / data_clean[col].std()
+
+# 4. Identificar variáveis categóricas (nominais/ordinais) exceto resposta
+cat_cols = data_clean.select_dtypes(include=["object", "category"]).columns.tolist()
+cat_cols = [c for c in cat_cols if c != "species"]
+
+# Definição:
+# - Nominais: 'island', 'sex'
+# - Ordinais: neste dataset não há variáveis ordinais naturais, mas podemos simular (ex.: 'sex')
+nom_cols = ["island", "sex"]
+
+# 5. Codificação
+# One-hot encoding para nominais
+for col in nom_cols:
+    dummies = pd.get_dummies(data_clean[col], prefix=col + "_nom")
+    data_clean = pd.concat([data_clean, dummies], axis=1)
+
+# (não temos ordinais reais aqui, então podemos pular ou criar exemplo se quisesse)
+
+# 6. Manter apenas resposta + colunas tratadas (_std, _nom, _ord)
+cols_keep = ["species"] + [c for c in data_clean.columns if c.endswith(("_std", "_nom", "_ord"))]
+final_df = data_clean[cols_keep]
+
+final_df.head()
